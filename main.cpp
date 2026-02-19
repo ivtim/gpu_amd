@@ -140,14 +140,14 @@ int main() {
             const int gridSize = (N2 + block - 1) / block;
 
             for (int w = 0; w < 3; ++w) {
-                hipLaunchKernelGGL(vecAdd, dim3(gridSize), dim3(block), 0, 0, dA, dB, dC, (int)N2);
+                hipLaunchKernelGGL(vecAdd2, dim3(gridSize), dim3(block), 0, 0, dA, dB, dC, (int)N2);
             }
             HIP_CHECK(hipDeviceSynchronize());
 
             const int repeats = 20;
             HIP_CHECK(hipEventRecord(start, 0));
             for (int r = 0; r < repeats; ++r) {
-                hipLaunchKernelGGL(vecAdd, dim3(gridSize), dim3(block), 0, 0, dA, dB, dC, (int)N2);
+                hipLaunchKernelGGL(vecAdd2, dim3(gridSize), dim3(block), 0, 0, dA, dB, dC, (int)N2);
             }
             HIP_CHECK(hipEventRecord(stop, 0));
             HIP_CHECK(hipEventSynchronize(stop));
@@ -179,3 +179,4 @@ int main() {
 
     return 0;
 }
+
