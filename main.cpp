@@ -1,7 +1,6 @@
-﻿#include <hip/hip_runtime.h>
+#include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
 #include <iostream>
-#include <chrono>
 #include <vector>
 
 
@@ -33,6 +32,21 @@ __global__ void vecAdd2(const float* A, const float* B, float* C, int N) {
 
     C[idx0] = A[idx0] + B[idx0];
     C[idx1] = A[idx1] + B[idx1];
+}
+
+__global__ void vecAdd4(const float* A, const float* B, float* C, int N) {
+    int pair_id = blockIdx.x * blockDim.x + threadIdx.x;
+    int idx0 = pair_id * 4;
+    int idx1 = idx0 + 1;
+    int idx2 = idx0 + 2;
+    int idx3 = idx0 + 3;
+
+    if (idx0 >= N) return;
+
+    C[idx0] = A[idx0] + B[idx0];
+    C[idx1] = A[idx1] + B[idx1];
+    C[idx2] = A[idx2] + B[idx2];
+    C[idx3] = A[idx3] + B[idx3];
 }
 
 int main() {
@@ -155,10 +169,40 @@ int main() {
             HIP_CHECK(hipEventElapsedTime(&ms, start, stop));
 
             double avg_ms = ms / repeats;
-            double bytesProcessed = double(3) * double(N2) * double(sizeof(float));
+            double bytesProcessed = double(3) * double(N2origin) * double(sizeof(float));
             double bandwidthMBs = (bytesProcessed / (avg_ms / 1000.0)) / 1048576.0;
 
             results.push_back({ 2, N2origin, block, bandwidthMBs, avg_ms });
+            //std::cout << "block=" << block << " N=" << N2 << " ms=" << avg_ms << " bandwidth(MB/s)=" << bandwidthMBs << std::endl;
+        }
+    }
+
+    for (int block : blockCandidates) {
+        for (size_t N2 : Nvals) {
+            size_t N2origin = N2;
+            N2 = N2 / 4;
+            const int gridSize = (N2 + block - 1) / block;
+
+            for (int w = 0; w < 3; ++w) {
+                hipLaunchKernelGGL(vecAdd4, dim3(gridSize), dim3(block), 0, 0, dA, dB, dC, (int)N2);
+            }
+            HIP_CHECK(hipDeviceSynchronize());
+
+            const int repeats = 20;
+            HIP_CHECK(hipEventRecord(start, 0));
+            for (int r = 0; r < repeats; ++r) {
+                hipLaunchKernelGGL(vecAdd4, dim3(gridSize), dim3(block), 0, 0, dA, dB, dC, (int)N2);
+            }
+            HIP_CHECK(hipEventRecord(stop, 0));
+            HIP_CHECK(hipEventSynchronize(stop));
+            float ms = 0.0f;
+            HIP_CHECK(hipEventElapsedTime(&ms, start, stop));
+
+            double avg_ms = ms / repeats;
+            double bytesProcessed = double(3) * double(N2origin) * double(sizeof(float));
+            double bandwidthMBs = (bytesProcessed / (avg_ms / 1000.0)) / 1048576.0;
+
+            results.push_back({ 4, N2origin, block, bandwidthMBs, avg_ms });
             //std::cout << "block=" << block << " N=" << N2 << " ms=" << avg_ms << " bandwidth(MB/s)=" << bandwidthMBs << std::endl;
         }
     }
@@ -179,4 +223,3 @@ int main() {
 
     return 0;
 }
-
