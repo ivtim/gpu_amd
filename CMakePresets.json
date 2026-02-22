@@ -1,22 +1,23 @@
 ﻿{
     "version": 3,
     "configurePresets": [
-        {
-            "name": "windows-base",
-            "hidden": true,
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "installDir": "${sourceDir}/out/install/${presetName}",
-          "cacheVariables": {
-            "CMAKE_C_COMPILER": "C:\\Program Files\\AMD\\ROCm\\6.4\\bin\\clang++.exe",
-            "CMAKE_CXX_COMPILER": "C:\\Program Files\\AMD\\ROCm\\6.4\\bin\\clang++.exe"
-          },
-            "condition": {
-                "type": "equals",
-                "lhs": "${hostSystemName}",
-                "rhs": "Windows"
-            }
+      {
+        "name": "windows-base",
+        "hidden": true,
+        "generator": "Ninja",
+        "binaryDir": "${sourceDir}/out/build/${presetName}",
+        "installDir": "${sourceDir}/out/install/${presetName}",
+        "cacheVariables": {
+          "CMAKE_C_COMPILER": "C:\\Program Files\\AMD\\ROCm\\6.4\\bin\\clang.exe",
+          "CMAKE_CXX_COMPILER": "C:\\Program Files\\AMD\\ROCm\\6.4\\bin\\clang++.exe"
         },
+        "condition": {
+          "type": "equals",
+          "lhs": "${hostSystemName}",
+          "rhs": "Windows"
+        },
+        "intelliSenseMode": "clang-x64"
+      },
         {
             "name": "x64-debug",
             "displayName": "x64 Debug",
